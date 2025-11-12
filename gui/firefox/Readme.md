@@ -79,7 +79,7 @@ podman restart c1
 podman stop c1
 podman rm -f c1
 podman ps -a -q | xargs podman rm -f
-podman run --name c1 -ti --rm --env="DISPLAY" --net=host  --mount type=bind,source=/home/gizaoui,destination=/root mycentos /usr/bin/bash
+podman run --privileged --name c1 -ti --rm --env="DISPLAY" --net=host  --mount type=bind,source=/home/gizaoui,destination=/root mycentos /usr/bin/bash
 podman create --name c1  --env="DISPLAY" --net=host  --mount type=bind,source=/home/gizaoui,destination=/root mycentos sleep infinity
 podman exec -ti c1 /usr/bin/bash
 podman info | grep graphRoot: # graphRoot: /home/gizaoui/.local/share/containers/storage
