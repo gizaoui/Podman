@@ -1,6 +1,7 @@
 # Firefox
 
 
+
 ```bash
 podman --version
 podman info
@@ -10,19 +11,69 @@ systemctl --user status dbus.socket
 systemctl --user enable --now dbus.socket
 ```
 
+
+## Supervision & Admin
+
 ```bash
 flatpak update --user io.podman_desktop.PodmanDesktop
 flatpak run io.podman_desktop.PodmanDesktop
 ```
 
-```bash
 
+## CentOS
+
+```bash
+cat <<EOF >Containerfile && podman system prune -a -f && podman build -t mycentos .
+FROM centos:7
+RUN dbus-uuidgen > /etc/machine-id && dbus-uuidgen > /var/lib/dbus/machine-id && \
+    sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
+    sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+RUN yum update -y && yum install -y gtk3 gvim mlocate && updatedb && yum clean all
+# CMD [ "sleep", "infinity" ]
+EOF
 ```
 
+```bash
+cat <<EOF >Containerfile && podman system prune -a -f && podman build -t myphpfpm .
+FROM php:7.4-fpm
+RUN apt-get -y update && apt-get install -y gcc make libc-dev libpq-dev
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
+RUN echo "date.timezone=Europe/Paris" >> /usr/local/etc/php/php.ini
+EXPOSE 9000
+CMD ["php-fpm"]
+EOF
+
+podman run -d --name contPhpFpm -v ./app:/var/www/html --network host myphpfpm 
+```
+
+
+
+```bash
+cd /home/gizaoui/git/Podman/gui/firefox && \
+podman rm -f mynginx && \
+podman run -d --name mynginx \
+-v ./app:/var/www/html \
+-v ./config/default.conf:/etc/nginx/conf.d/default.conf \
+--publish 8080:80 \
+docker.io/library/nginx:latest && \
+podman container logs mynginx
+```
+
+podman run -ti --rm --name contNginx -v ./app:/var/www/html -v ./config/default.conf:/etc/nginx/conf.d/default.conf --publish 8080:80 docker.io/library/ --network host nginx:latest
+
+podman exec -ti c1 /usr/bin/bash
+
+
+
+## MySQL
 
 ```bash
 # https://infotechys.com/deploying-mysql-using-podman/
 # https://podman.io/blogs/2018/10/03/podman-remove-content-homedir
+
+# podman system prune -a -f && podman build -t mycentos .
+
 podman pull docker.io/library/mysql:latest
 
 rm -rf /home/gizaoui/db_data && \
@@ -34,6 +85,7 @@ rm -rf /home/gizaoui/db_data && \
 mkdir /home/gizaoui/db_data && \
 ls -l -d /home/gizaoui/db_data
 
+podman rm -f mysql-container && \
 podman run -d --name mysql-container \
 -e MYSQL_USER=gzi \
 -e MYSQL_PASSWORD=gzipwd \
@@ -41,16 +93,18 @@ podman run -d --name mysql-container \
 -e MYSQL_ROOT_PASSWORD=gzipwdadm \
 -v /home/gizaoui/db_data:/var/lib/mysql:Z \
 --publish 3306:3306 \
-mysql:latest
+mysql:latest && \
+podman container logs mysql-container
 
 ls -l /home/gizaoui/db_data
 
-podman container logs mysql-container
 
-podman exec -it mysql-container /bin/bash # -c "mkdir /testdir; touch /testdir/testfile; chown -R 1:1 /testdir"
 
-rootlesskit bash
-rm -rf /home/gizaoui/db_data
+podman exec -it mysql-container /bin/bash -c "ls -l /var/lib/mysql && grep mysql /etc/passwd"
+
+# rootlesskit bash && rm -rf /home/gizaoui/db_data && exit
+podman unshare rm -rf /home/gizaoui/db_data
+
 
 ```
 
