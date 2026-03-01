@@ -1,0 +1,19 @@
+
+
+## Création de l'environnement
+
+```bash
+cat <<EOF >Containerfile && podman system prune -a -f && podman build -t mycentos .
+FROM centos:7
+RUN dbus-uuidgen > /etc/machine-id && dbus-uuidgen > /var/lib/dbus/machine-id && \
+    sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
+    sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+RUN yum update -y && yum install -y gtk3 gvim mlocate rpmdevtools rpmlint && updatedb && yum clean all
+EOF
+```
+
+## Lancement du *container*
+
+```bash
+podman run --privileged --name c1 -ti --rm --env="DISPLAY" --net=host  --mount type=bind,source=/home/gizaoui,destination=/root mycentos /usr/bin/bash
+```

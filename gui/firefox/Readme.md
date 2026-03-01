@@ -28,7 +28,7 @@ FROM centos:7
 RUN dbus-uuidgen > /etc/machine-id && dbus-uuidgen > /var/lib/dbus/machine-id && \
     sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
     sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
-RUN yum update -y && yum install -y gtk3 gvim mlocate && updatedb && yum clean all
+RUN yum update -y && yum install -y gtk3 gvim mlocate rpmdevtools rpmlint && updatedb && yum clean all
 # CMD [ "sleep", "infinity" ]
 EOF
 ```
@@ -44,7 +44,7 @@ EXPOSE 9000
 CMD ["php-fpm"]
 EOF
 
-podman run -d --name contPhpFpm -v ./app:/var/www/html --network host myphpfpm 
+podman run -d --name contPhpFpm -v ./app:/var/www/html --network host myphpfpm
 ```
 
 
@@ -168,7 +168,7 @@ yum install -y xclock
 dbus-uuidgen > /etc/machine-id
 
 # Error: no DISPLAY
-gvim 
+gvim
 ```
 
 
@@ -232,7 +232,7 @@ docker run -d --name c2 --mount type=volume,src=myvolume,destination=/usr/share/
 docker exec -ti c2 bash
 ```
 
-   
+
 ## TMPFS
 
 ```bash
@@ -307,6 +307,3 @@ docker exec -ti c1 bash
 -  486  chmod 777 /var/run/docker.sock
 -  489  usermod -a -G docker gizaoui
 -  490  groupmod -g gizaoui docker
-
-
- 
